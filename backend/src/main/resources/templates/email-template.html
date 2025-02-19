@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Powiadomienie o zmianie ceny</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px;">
+
+<div style="background-color: #ffffff; border-radius: 8px; padding: 20px; max-width: 600px; margin: 0 auto; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+    <!-- Dynamiczny temat wiadomości -->
+    <h2 style="color: #333333; margin-bottom: 20px;">Powiadomienie o zmianie ceny dla produktu: <strong th:text="${productName}">Nazwa Produktu</strong> - <span th:text="${currentDate}">Data</span></h2>
+
+    <p style="color: #555555; margin-bottom: 20px;">Cześć,</p>
+    <p style="color: #555555; margin-bottom: 20px;">
+        Cena dla produktu <strong th:text="${productName}">Nazwa Produktu</strong> spadła do <strong th:text="${newPrice + ' PLN'}">0.00 PLN</strong>.
+    </p>
+
+    <!-- Ukryty unikalny identyfikator -->
+    <p style="display:none;">ID wiadomości: [[${#dates.format(#dates.createNow(), 'yyyyMMddHHmmss')}]]</p>
+
+    <p style="margin-bottom: 20px;">
+        <a href="#" th:href="${productUrl}" style="display: inline-block; background-color: #28a745; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;">
+            Zobacz produkt
+        </a>
+    </p>
+
+    <p style="color: #555555; margin-bottom: 20px;">Dziękujemy za korzystanie z Price Tracker!</p>
+
+</div>
+
+</body>
+</html>
