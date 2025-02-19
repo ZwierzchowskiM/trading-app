@@ -25,7 +25,7 @@ public class XtbService {
   @Value("${xtb.userId}")
   private String userId;
   @Value("${xtb.pass}")
-  private String password ;
+  private String password;
 
   public Credentials xtbCredentials() {
     return new Credentials(userId, password);

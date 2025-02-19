@@ -19,10 +19,17 @@ import org.ta4j.core.rules.AndRule;
 import org.ta4j.core.rules.NotRule;
 import org.ta4j.core.rules.OverIndicatorRule;
 import org.ta4j.core.rules.UnderIndicatorRule;
+import pro.xstore.api.message.command.APICommandFactory;
+import pro.xstore.api.message.error.APICommandConstructionException;
 import pro.xstore.api.message.error.APICommunicationException;
+import pro.xstore.api.message.error.APIReplyParseException;
 import pro.xstore.api.message.records.SCandleRecord;
+import pro.xstore.api.message.response.APIErrorResponse;
 import pro.xstore.api.streaming.StreamingListener;
 import pro.xstore.api.sync.SyncAPIConnector;
+
+import static pro.xstore.api.message.codes.PERIOD_CODE.PERIOD_M1;
+import static pro.xstore.api.message.codes.PERIOD_CODE.PERIOD_M5;
 
 @Service
 public class RealTimeStrategyRunner {
@@ -51,22 +58,42 @@ public class RealTimeStrategyRunner {
 
     subscribeCandles(connector);
     // printSeries(series);
-    Thread loopThread = new Thread(() -> {
+
     while (running) {
 
-        if (newCandle) {
-          updateBarSeries(newCandleRecord);
-          // printSeries(series);
-          checkStrategy();
-          newCandle = false;
-        }
-
+      //System.out.println("wątek start");
+      if (newCandle) {
+        updateBarSeries(newCandleRecord);
+        // printSeries(series);
+        checkStrategy();
+        newCandle = false;
+      }
     }
-    });
-    loopThread.setDaemon(true);
-    loopThread.start();
   }
 
+  //  public void start() {
+  //
+  //    subscribeCandles(connector);
+  //    // printSeries(series);
+  //    Thread loopThread = new Thread(() -> {
+  //      while (running) {
+  //        try {
+  //          System.out.println("wątek start");
+  //          if (newCandle) {
+  //            updateBarSeries(newCandleRecord);
+  //            // printSeries(series);
+  //            checkStrategy();
+  //            newCandle = false;
+  //          }
+  //          Thread.sleep(500);
+  //        } catch (InterruptedException e) {
+  //          Thread.currentThread().interrupt();
+  //        }
+  //      }
+  //    });
+  //    loopThread.setDaemon(true);
+  //    loopThread.start();
+  //  }
 
   public void stop() {
     running = false;
@@ -162,11 +189,21 @@ public class RealTimeStrategyRunner {
 
     try {
       connector.connectStream(sl);
-      // APICommandFactory.executeChartLastCommand(connector, symbol, PERIOD_M5, 0L);
+       APICommandFactory.executeChartLastCommand(connector, symbol, PERIOD_M1, 0L);
       connector.subscribeCandle(symbol);
-      // System.out.println("symbol subscribed");
-    } catch (IOException | APICommunicationException e) {
+      System.out.println("symbol subscribed");
+    }
+    catch (IOException | APICommunicationException e) {
       throw new RuntimeException(e);
+    }
+    catch (APIErrorResponse e) {
+      System.out.println("błąd API");
+    }
+    catch (APIReplyParseException e) {
+        throw new RuntimeException(e);
+    }
+    catch (APICommandConstructionException e) {
+        throw new RuntimeException(e);
     }
   }
 
