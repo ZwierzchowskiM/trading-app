@@ -38,24 +38,20 @@ public class RealTimeStrategyRunner {
   private SyncAPIConnector connector;
   private volatile boolean newCandle = false;
   private volatile SCandleRecord newCandleRecord = null;
-  private XtbService xtbService = new XtbService();
-  TradingRecord tradingRecord = new BaseTradingRecord();
+  private XtbService xtbService;
+  private TradingRecord tradingRecord = new BaseTradingRecord();
 
   private volatile boolean running = true; // Flaga do zatrzymywania pętli
 
 
-  public RealTimeStrategyRunner() {
-
-    try {
-      series = YahooFinanceService.getDataFromYahoo();
-      connector = xtbService.connect();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+  public RealTimeStrategyRunner(XtbService xtbService) {
+    this.xtbService = xtbService;
   }
 
   public void start() {
 
+    series = YahooFinanceService.getDataFromYahoo();
+    connector = xtbService.connect();
     subscribeCandles(connector);
     // printSeries(series);
 

@@ -12,6 +12,3 @@ public class TradingApplication {
     SpringApplication.run(TradingApplication.class, args);
   }
 }
-
-// RealTimeStrategyRunner realTimeStrategyRunner = new RealTimeStrategyRunner();
-// realTimeStrategyRunner.start();
