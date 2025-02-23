@@ -15,7 +15,7 @@ VOLUME /tmp
 
 
 # Kopiowanie skompilowanej aplikacji
-COPY --from=build /app/target/price-tracker-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/trading-app-0.0.1-SNAPSHOT.jar app.jar
 
 # Resetowanie ENTRYPOINT i CMD
 ENTRYPOINT []

@@ -1,15 +1,20 @@
 package com.mzwierzchowski.trading_app.service;
 
+import static pro.xstore.api.message.codes.PERIOD_CODE.PERIOD_M1;
+
 import com.mzwierzchowski.trading_app.strategy.BullishGChannelRule;
 import com.mzwierzchowski.trading_app.strategy.GChannel;
 import com.mzwierzchowski.trading_app.strategy.GChannelLowerIndicator;
 import com.mzwierzchowski.trading_app.strategy.GChannelUpperIndicator;
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.EMAIndicator;
@@ -23,13 +28,12 @@ import pro.xstore.api.message.command.APICommandFactory;
 import pro.xstore.api.message.error.APICommandConstructionException;
 import pro.xstore.api.message.error.APICommunicationException;
 import pro.xstore.api.message.error.APIReplyParseException;
+import pro.xstore.api.message.records.RateInfoRecord;
 import pro.xstore.api.message.records.SCandleRecord;
 import pro.xstore.api.message.response.APIErrorResponse;
+import pro.xstore.api.message.response.ChartResponse;
 import pro.xstore.api.streaming.StreamingListener;
 import pro.xstore.api.sync.SyncAPIConnector;
-
-import static pro.xstore.api.message.codes.PERIOD_CODE.PERIOD_M1;
-import static pro.xstore.api.message.codes.PERIOD_CODE.PERIOD_M5;
 
 @Service
 public class RealTimeStrategyRunner {
@@ -38,58 +42,62 @@ public class RealTimeStrategyRunner {
   private SyncAPIConnector connector;
   private volatile boolean newCandle = false;
   private volatile SCandleRecord newCandleRecord = null;
-  private XtbService xtbService;
+  private volatile boolean running = true;
   private TradingRecord tradingRecord = new BaseTradingRecord();
-
-  private volatile boolean running = true; // Flaga do zatrzymywania pętli
-
+  private ChartResponse chartHistoricalData;
+  String symbol = "BITCOIN";
+  private XtbService xtbService;
 
   public RealTimeStrategyRunner(XtbService xtbService) {
     this.xtbService = xtbService;
   }
 
+  @Async
   public void start() {
 
-    series = YahooFinanceService.getDataFromYahoo();
     connector = xtbService.connect();
+    chartHistoricalData = xtbService.getHistoricalData(connector, symbol);
+    series = covertChartReposnsetoSeries(chartHistoricalData);
+    printSeries(series);
     subscribeCandles(connector);
-    // printSeries(series);
 
     while (running) {
 
-      //System.out.println("wątek start");
       if (newCandle) {
         updateBarSeries(newCandleRecord);
-        // printSeries(series);
+        printSeries(series);
         checkStrategy();
         newCandle = false;
       }
     }
+    System.out.println("stratategia zatrzymana");
   }
 
-  //  public void start() {
-  //
-  //    subscribeCandles(connector);
-  //    // printSeries(series);
-  //    Thread loopThread = new Thread(() -> {
-  //      while (running) {
-  //        try {
-  //          System.out.println("wątek start");
-  //          if (newCandle) {
-  //            updateBarSeries(newCandleRecord);
-  //            // printSeries(series);
-  //            checkStrategy();
-  //            newCandle = false;
-  //          }
-  //          Thread.sleep(500);
-  //        } catch (InterruptedException e) {
-  //          Thread.currentThread().interrupt();
-  //        }
-  //      }
-  //    });
-  //    loopThread.setDaemon(true);
-  //    loopThread.start();
-  //  }
+  private BarSeries covertChartReposnsetoSeries(ChartResponse chartHistoricalData) {
+
+    BarSeries newSeries = new BaseBarSeries();
+    List<RateInfoRecord> rateInfoRecords = chartHistoricalData.getRateInfos();
+    int digits = chartHistoricalData.getDigits();
+
+    for (int i = 0; i < rateInfoRecords.size(); i++) {
+
+      RateInfoRecord rateInfoRecord = rateInfoRecords.get(i);
+      long ctmMillis = rateInfoRecord.getCtm();
+      ZonedDateTime barTime = Instant.ofEpochMilli(ctmMillis).atZone(ZoneId.systemDefault());
+      // Przeliczenie cen:
+      // Cena otwarcia już jest pomnożona, więc dzielimy przez 10^digits
+      double open = rateInfoRecord.getOpen() / Math.pow(10, digits);
+      // Pozostałe wartości to przesunięcia od ceny otwarcia
+      double close = open + (rateInfoRecord.getClose() / Math.pow(10, digits));
+      double high = open + (rateInfoRecord.getHigh() / Math.pow(10, digits));
+      double low = open + (rateInfoRecord.getLow() / Math.pow(10, digits));
+      double volume = rateInfoRecord.getVol();
+
+      newSeries.addBar(barTime, open, high, low, close, volume);
+    }
+
+    return newSeries;
+  }
 
   public void stop() {
     running = false;
@@ -185,21 +193,23 @@ public class RealTimeStrategyRunner {
 
     try {
       connector.connectStream(sl);
-       APICommandFactory.executeChartLastCommand(connector, symbol, PERIOD_M1, 0L);
+      testCommand(connector, symbol);
       connector.subscribeCandle(symbol);
       System.out.println("symbol subscribed");
-    }
-    catch (IOException | APICommunicationException e) {
+    } catch (IOException | APICommunicationException e) {
       throw new RuntimeException(e);
     }
-    catch (APIErrorResponse e) {
+  }
+
+  void testCommand(SyncAPIConnector connector, String symbol) {
+    try {
+      APICommandFactory.executeChartLastCommand(connector, symbol, PERIOD_M1, 0L);
+    } catch (APICommandConstructionException
+        | APICommunicationException
+        | APIReplyParseException e) {
+      throw new RuntimeException(e);
+    } catch (APIErrorResponse e) {
       System.out.println("błąd API");
-    }
-    catch (APIReplyParseException e) {
-        throw new RuntimeException(e);
-    }
-    catch (APICommandConstructionException e) {
-        throw new RuntimeException(e);
     }
   }
 
