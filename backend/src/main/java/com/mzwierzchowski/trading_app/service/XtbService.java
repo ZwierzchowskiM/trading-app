@@ -3,9 +3,12 @@ package com.mzwierzchowski.trading_app.service;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import pro.xstore.api.message.command.APICommandFactory;
 import pro.xstore.api.message.error.APICommandConstructionException;
 import pro.xstore.api.message.error.APICommunicationException;
@@ -24,6 +27,8 @@ public class XtbService {
   private String userId;
   @Value("${XTB_PASS}")
   private String password;
+
+  private final RestTemplate restTemplate = new RestTemplate();
 
   public SyncAPIConnector connect() {
 
@@ -57,6 +62,19 @@ public class XtbService {
     } catch (APIErrorResponse e) {
       System.out.println("błąd pobierania danych historycnych");
       return null;
+    }
+  }
+
+
+  // Uruchamiane co 5 minut: "0 */5 * * * *"
+  @Scheduled(cron = "0 */1 * * * *")
+  public void checkAppLive() {
+    String url = "http://localhost:8080/api/trading/status";
+    try {
+      String response = restTemplate.getForObject(url, String.class);
+      System.out.println("Scheduled health check response: " + response);
+    } catch (Exception e) {
+      System.err.println("Scheduled health check failed: " + e.getMessage());
     }
   }
 

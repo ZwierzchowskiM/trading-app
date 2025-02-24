@@ -27,7 +27,6 @@ public class TradingController {
 
     @GetMapping("/status")
     public String getStatus() {
-        System.out.println("test strategii");
         return "Strategia działa!";
     }
 

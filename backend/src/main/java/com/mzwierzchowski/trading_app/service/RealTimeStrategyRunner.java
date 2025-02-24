@@ -46,10 +46,18 @@ public class RealTimeStrategyRunner {
   private TradingRecord tradingRecord = new BaseTradingRecord();
   private ChartResponse chartHistoricalData;
   String symbol = "BITCOIN";
-  private XtbService xtbService;
 
-  public RealTimeStrategyRunner(XtbService xtbService) {
+  private XtbService xtbService;
+  private final HistoricalDataConverter historicalDataConverter;
+  private final StrategyEvaluator strategyEvaluator;
+
+  public RealTimeStrategyRunner(
+      XtbService xtbService,
+      HistoricalDataConverter historicalDataConverter,
+      StrategyEvaluator strategyEvaluator) {
     this.xtbService = xtbService;
+    this.historicalDataConverter = historicalDataConverter;
+    this.strategyEvaluator = strategyEvaluator;
   }
 
   @Async
@@ -57,7 +65,7 @@ public class RealTimeStrategyRunner {
 
     connector = xtbService.connect();
     chartHistoricalData = xtbService.getHistoricalData(connector, symbol);
-    series = covertChartReposnsetoSeries(chartHistoricalData);
+    series = historicalDataConverter.convertToSeries(chartHistoricalData);
     printSeries(series);
     subscribeCandles(connector);
 
@@ -65,45 +73,23 @@ public class RealTimeStrategyRunner {
 
       if (newCandle) {
         updateBarSeries(newCandleRecord);
-        printSeries(series);
-        checkStrategy();
+        strategyEvaluator.evaluate(series, tradingRecord);
         newCandle = false;
       }
     }
     System.out.println("stratategia zatrzymana");
   }
 
-  private BarSeries covertChartReposnsetoSeries(ChartResponse chartHistoricalData) {
-
-    BarSeries newSeries = new BaseBarSeries();
-    List<RateInfoRecord> rateInfoRecords = chartHistoricalData.getRateInfos();
-    int digits = chartHistoricalData.getDigits();
-
-    for (int i = 0; i < rateInfoRecords.size(); i++) {
-
-      RateInfoRecord rateInfoRecord = rateInfoRecords.get(i);
-      long ctmMillis = rateInfoRecord.getCtm();
-      ZonedDateTime barTime = Instant.ofEpochMilli(ctmMillis).atZone(ZoneId.systemDefault());
-      // Przeliczenie cen:
-      // Cena otwarcia już jest pomnożona, więc dzielimy przez 10^digits
-      double open = rateInfoRecord.getOpen() / Math.pow(10, digits);
-      // Pozostałe wartości to przesunięcia od ceny otwarcia
-      double close = open + (rateInfoRecord.getClose() / Math.pow(10, digits));
-      double high = open + (rateInfoRecord.getHigh() / Math.pow(10, digits));
-      double low = open + (rateInfoRecord.getLow() / Math.pow(10, digits));
-      double volume = rateInfoRecord.getVol();
-
-      newSeries.addBar(barTime, open, high, low, close, volume);
-    }
-
-    return newSeries;
-  }
 
   public void stop() {
     running = false;
   }
 
   private void updateBarSeries(SCandleRecord candleRecord) {
+    if (candleRecord == null) {
+      System.err.println("Received null candleRecord, skipping update.");
+      return;
+    }
     DateTimeFormatter formatter =
         DateTimeFormatter.ofPattern("MMM dd, yyyy, h:mm:ss a", Locale.ENGLISH);
     LocalDateTime localDateTime = LocalDateTime.parse(candleRecord.getCtmString(), formatter);
@@ -119,64 +105,6 @@ public class RealTimeStrategyRunner {
     newCandleRecord = null;
   }
 
-  private void checkStrategy() {
-    int endIndex = series.getEndIndex();
-
-    if (endIndex < 1) {
-      return;
-    }
-    ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-    EMAIndicator ema = new EMAIndicator(closePrice, 200);
-    GChannel gChannel = new GChannel(closePrice, 5, series);
-    GChannelUpperIndicator gChannelUpper = new GChannelUpperIndicator(gChannel);
-    GChannelLowerIndicator gChannelLower = new GChannelLowerIndicator(gChannel);
-
-    BullishGChannelRule bullishRule =
-        new BullishGChannelRule(series, gChannelUpper, gChannelLower, closePrice);
-
-    Rule buyRule = new AndRule(bullishRule, new UnderIndicatorRule(closePrice, ema));
-    Rule sellRule = new AndRule(new NotRule(bullishRule), new OverIndicatorRule(closePrice, ema));
-
-    Strategy strategy = new BaseStrategy(buyRule, sellRule);
-
-    boolean buySignal = buyRule.isSatisfied(endIndex, tradingRecord);
-    boolean sellSignal = sellRule.isSatisfied(endIndex, tradingRecord);
-
-    if (strategy.shouldEnter(endIndex) && tradingRecord.isClosed()) {
-
-      System.out.println("Strategy should ENTER on " + endIndex);
-      boolean entered =
-          tradingRecord.enter(endIndex, series.getLastBar().getClosePrice(), DecimalNum.valueOf(1));
-      if (entered) {
-        Trade entry = tradingRecord.getLastEntry();
-        System.out.println(
-            "Entered: "
-                + series.getLastBar().getEndTime()
-                + " (price="
-                + entry.getNetPrice().doubleValue()
-                + ", amount="
-                + entry.getAmount().doubleValue()
-                + ")");
-      }
-    } else if (strategy.shouldExit(endIndex) && !tradingRecord.isClosed()) {
-
-      System.out.println("Strategy should EXIT on " + endIndex);
-      boolean exited =
-          tradingRecord.exit(endIndex, series.getLastBar().getClosePrice(), DecimalNum.valueOf(1));
-      if (exited) {
-        Trade exit = tradingRecord.getLastExit();
-        System.out.println(
-            "Exited: "
-                + series.getLastBar().getEndTime()
-                + " (price="
-                + exit.getNetPrice().doubleValue()
-                + ", amount="
-                + exit.getAmount().doubleValue()
-                + ")");
-      }
-    }
-  }
-
   public void subscribeCandles(SyncAPIConnector connector) {
     StreamingListener sl =
         new StreamingListener() {
@@ -185,7 +113,6 @@ public class RealTimeStrategyRunner {
             System.out.println("Stream candle record: " + candleRecord);
             newCandle = true;
             newCandleRecord = candleRecord;
-            clearScreen();
           }
         };
 
@@ -222,8 +149,4 @@ public class RealTimeStrategyRunner {
     }
   }
 
-  public static void clearScreen() {
-    System.out.print("\033[H\033[2J");
-    System.out.flush();
-  }
 }
