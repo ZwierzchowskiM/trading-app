@@ -67,12 +67,12 @@ public class XtbService {
 
 
   // Uruchamiane co 5 minut: "0 */5 * * * *"
-  @Scheduled(cron = "0 */2 * * * *")
+  @Scheduled(cron = "0 */5 * * * *")
   public void checkAppLive() {
     String url = "https://trading-app-o7wc.onrender.com/api/trading/status";
     try {
       String response = restTemplate.getForObject(url, String.class);
-      System.out.println("Scheduled health check response: " + response);
+      //System.out.println("Scheduled health check response: " + response);
     } catch (Exception e) {
       System.err.println("Scheduled health check failed: " + e.getMessage());
     }

@@ -12,28 +12,28 @@ import org.springframework.web.bind.annotation.*;
     allowCredentials = "true")
 public class TradingController {
 
-    private final RealTimeStrategyRunner strategyRunner;
+  private final RealTimeStrategyRunner strategyRunner;
 
-    public TradingController(RealTimeStrategyRunner strategyRunner) {
-        this.strategyRunner = strategyRunner;
-    }
+  public TradingController(RealTimeStrategyRunner strategyRunner) {
+    this.strategyRunner = strategyRunner;
+  }
 
-    @PostMapping("/start")
-    public String startStrategy() {
-        strategyRunner.start();
+  @PostMapping("/start")
+  public String startStrategy() {
+    strategyRunner.startLoop();
     System.out.println("Zadanie uruchomienia strategii");
-        return "Strategia uruchomiona!";
-    }
+    return "Strategia uruchomiona!";
+  }
 
-    @GetMapping("/status")
-    public String getStatus() {
-        return "Strategia działa!";
-    }
+  @GetMapping("/status")
+  public String getStatus() {
+    return "Strategia działa!";
+  }
 
-    @PostMapping("/stop")
-    public String stopStrategy() {
-        strategyRunner.stop();
-        System.out.println("Zadanie zatrzymania strategii");
-        return "Strategia zatrzymana!";
-    }
+  @PostMapping("/stop")
+  public String stopStrategy() {
+    strategyRunner.stop();
+    System.out.println("Zadanie zatrzymania strategii");
+    return "Strategia zatrzymana!";
+  }
 }
