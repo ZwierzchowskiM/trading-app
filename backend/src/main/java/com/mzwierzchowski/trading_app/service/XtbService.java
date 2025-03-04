@@ -38,7 +38,7 @@ public class XtbService {
       LoginResponse loginResponse = null;
       loginResponse = APICommandFactory.executeLoginCommand(connector, new Credentials(userId, password));
       if (loginResponse.getStatus() == true) {
-        System.out.println("User logged in");
+       // System.out.println("User logged in");
       }
       return connector;
     } catch (APICommandConstructionException
@@ -69,7 +69,7 @@ public class XtbService {
   double getSymbol (SyncAPIConnector connector, String symbol) throws APIErrorResponse, APICommunicationException, APIReplyParseException, APICommandConstructionException {
 
     SymbolResponse symbolResponse = APICommandFactory.executeSymbolCommand(connector, symbol);
-    System.out.println("Czas: " + LocalDateTime.now());
+    //System.out.println("Czas: " + LocalDateTime.now());
     System.out.println("Cena ASK: " + symbolResponse.getSymbol().getAsk());
     return symbolResponse.getSymbol().getAsk();
   }
@@ -88,7 +88,7 @@ public class XtbService {
     }
   }
 
-  @Scheduled(cron = "0 */2 * * * *")
+  @Scheduled(cron = "0 */30 * * * *")
   public void checkPrice() {
     String url = "https://trading-app-o7wc.onrender.com/api/trading/check";
     try {
