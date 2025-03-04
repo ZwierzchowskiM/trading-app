@@ -29,9 +29,10 @@ public class RealTimeStrategyRunner {
   private volatile boolean newCandle = false;
   private volatile SCandleRecord newCandleRecord = null;
   private volatile boolean running = true;
-  private TradingRecord tradingRecord = new BaseTradingRecord();
+  private final TradingRecord tradingRecord = new BaseTradingRecord();
   private ChartResponse chartHistoricalData;
-  String symbol = "BITCOIN";
+  private String symbol = "BITCOIN";
+  private static int MAX_BAR_COUNT = 200;
 
   private XtbService xtbService;
   private final HistoricalDataConverter historicalDataConverter;
@@ -52,7 +53,9 @@ public class RealTimeStrategyRunner {
     connector = xtbService.connect();
     chartHistoricalData = xtbService.getHistoricalData(connector, symbol);
     series = historicalDataConverter.convertToSeries(chartHistoricalData);
+    series.setMaximumBarCount(MAX_BAR_COUNT);
     printSeries(series);
+    System.out.println();
     subscribeCandles(connector);
 
     while (running) {

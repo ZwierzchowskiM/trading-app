@@ -19,7 +19,7 @@ import org.ta4j.core.rules.UnderIndicatorRule;
 @Service
 public class StrategyEvaluator {
 
-  Num eneterPrice;
+  Num enterPrice;
   Num exitPrice;
   double result;
 
@@ -63,7 +63,7 @@ public class StrategyEvaluator {
 
     if (strategy.shouldExit(endIndex) && !tradingRecord.isClosed()) {
       System.out.println("Strategy should EXIT on " + endIndex);
-      eneterPrice = tradingRecord.getLastEntry().getNetPrice();
+      enterPrice = tradingRecord.getLastEntry().getNetPrice();
       boolean exited =
           tradingRecord.exit(endIndex, series.getLastBar().getClosePrice(), DecimalNum.valueOf(1));
       if (exited) {
@@ -77,7 +77,7 @@ public class StrategyEvaluator {
                 + exit.getAmount().doubleValue()
                 + ")");
         exitPrice = tradingRecord.getLastExit().getNetPrice();
-        result = exitPrice.doubleValue() - eneterPrice.doubleValue();
+        result = exitPrice.doubleValue() - enterPrice.doubleValue();
         System.out.println("Wynik strategii: " + result);
         System.out.println("------------------------------------------------------");
       }
