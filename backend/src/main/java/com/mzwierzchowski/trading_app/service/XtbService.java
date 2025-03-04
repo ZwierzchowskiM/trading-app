@@ -2,6 +2,7 @@ package com.mzwierzchowski.trading_app.service;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -65,11 +66,31 @@ public class XtbService {
     }
   }
 
+  double getSymbol (SyncAPIConnector connector, String symbol) throws APIErrorResponse, APICommunicationException, APIReplyParseException, APICommandConstructionException {
+
+    SymbolResponse symbolResponse = APICommandFactory.executeSymbolCommand(connector, symbol);
+    System.out.println("Czas: " + LocalDateTime.now());
+    System.out.println("Cena ASK: " + symbolResponse.getSymbol().getAsk());
+    return symbolResponse.getSymbol().getAsk();
+  }
+
+
 
   // Uruchamiane co 5 minut: "0 */5 * * * *"
   @Scheduled(cron = "0 */5 * * * *")
   public void checkAppLive() {
     String url = "https://trading-app-o7wc.onrender.com/api/trading/status";
+    try {
+      String response = restTemplate.getForObject(url, String.class);
+      //System.out.println("Scheduled health check response: " + response);
+    } catch (Exception e) {
+      System.err.println("Scheduled health check failed: " + e.getMessage());
+    }
+  }
+
+  @Scheduled(cron = "0 */2 * * * *")
+  public void checkPrice() {
+    String url = "https://trading-app-o7wc.onrender.com/api/trading/check";
     try {
       String response = restTemplate.getForObject(url, String.class);
       //System.out.println("Scheduled health check response: " + response);

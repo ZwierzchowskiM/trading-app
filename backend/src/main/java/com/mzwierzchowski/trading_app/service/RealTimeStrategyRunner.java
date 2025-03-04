@@ -3,11 +3,13 @@ package com.mzwierzchowski.trading_app.service;
 import static pro.xstore.api.message.codes.PERIOD_CODE.PERIOD_M1;
 
 import java.io.IOException;
+import java.sql.SQLOutput;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
@@ -34,17 +36,61 @@ public class RealTimeStrategyRunner {
   private String symbol = "BITCOIN";
   private static int MAX_BAR_COUNT = 200;
 
+  private double lastPrice =0 ;
+  private String lastResult = "";
+  private double newPrice;
+  private String newResult;
+
+
+  private StockTwitsService stockTwitsService;
   private XtbService xtbService;
   private final HistoricalDataConverter historicalDataConverter;
   private final StrategyEvaluator strategyEvaluator;
 
   public RealTimeStrategyRunner(
-      XtbService xtbService,
-      HistoricalDataConverter historicalDataConverter,
-      StrategyEvaluator strategyEvaluator) {
-    this.xtbService = xtbService;
+          StockTwitsService stockTwitsService, XtbService xtbService,
+          HistoricalDataConverter historicalDataConverter,
+          StrategyEvaluator strategyEvaluator) {
+      this.stockTwitsService = stockTwitsService;
+      this.xtbService = xtbService;
     this.historicalDataConverter = historicalDataConverter;
     this.strategyEvaluator = strategyEvaluator;
+  }
+
+  public void getSinglePrice() {
+
+    String symbol2 = "BITCOIN";
+    connector = xtbService.connect();
+    try {
+
+      newPrice = xtbService.getSymbol(connector, symbol2);
+      newResult = stockTwitsService.getStockInfo();
+      System.out.println("new price: " + newPrice);
+      System.out.println("new Result: " + newResult);
+      compareResults();
+      System.out.println("--------------------------");
+
+    } catch (APIErrorResponse
+        | APICommunicationException
+        | APIReplyParseException
+        | APICommandConstructionException e) {
+      System.out.println("Bład API XTB");
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+      connectorClose(connector);
+
+
+  }
+
+  private void compareResults() {
+    System.out.println("-- Wyniki --");
+    double diff = newPrice - lastPrice;
+    lastPrice = newPrice;
+    System.out.println("ostatni sentyment: " + lastResult);
+    System.out.println("różnica kursu: " + diff);
+    lastResult = newResult;
   }
 
   @Async

@@ -2,6 +2,8 @@ package com.mzwierzchowski.trading_app.controller;
 
 import com.mzwierzchowski.trading_app.service.RealTimeStrategyRunner;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @Log4j2
@@ -18,6 +20,13 @@ public class TradingController {
     this.strategyRunner = strategyRunner;
   }
 
+  @GetMapping("/check")
+  public ResponseEntity checkSymbol() {
+    strategyRunner.getSinglePrice();
+
+    return new ResponseEntity<>(HttpStatusCode.valueOf(200));
+  }
+
   @PostMapping("/start")
   public String startStrategy() {
     strategyRunner.startLoop();
@@ -26,8 +35,9 @@ public class TradingController {
   }
 
   @GetMapping("/status")
-  public String getStatus() {
-    return "Strategia działa!";
+  public ResponseEntity getStatus() {
+
+    return new ResponseEntity<>(HttpStatusCode.valueOf(200));
   }
 
   @PostMapping("/stop")
