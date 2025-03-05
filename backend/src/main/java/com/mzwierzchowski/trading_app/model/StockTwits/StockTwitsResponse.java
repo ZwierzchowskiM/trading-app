@@ -1,4 +1,4 @@
-package com.mzwierzchowski.trading_app.model;
+package com.mzwierzchowski.trading_app.model.StockTwits;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;

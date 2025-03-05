@@ -3,13 +3,13 @@ package com.mzwierzchowski.trading_app.service;
 import static pro.xstore.api.message.codes.PERIOD_CODE.PERIOD_M1;
 
 import java.io.IOException;
-import java.sql.SQLOutput;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
+import com.mzwierzchowski.trading_app.model.StockTwits.StockTwitsResult;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
@@ -40,6 +40,7 @@ public class RealTimeStrategyRunner {
   private String lastResult = "";
   private double newPrice;
   private String newResult;
+  private StockTwitsResult stockTwitsResult;
 
 
   private StockTwitsService stockTwitsService;
@@ -64,9 +65,8 @@ public class RealTimeStrategyRunner {
     try {
 
       newPrice = xtbService.getSymbol(connector, symbol2);
-      newResult = stockTwitsService.getStockInfo();
+      stockTwitsResult = stockTwitsService.getStockSentiment();
       System.out.println("new price: " + newPrice);
-      System.out.println("new Result: " + newResult);
       compareResults();
       System.out.println("--------------------------");
 
@@ -85,12 +85,10 @@ public class RealTimeStrategyRunner {
   }
 
   private void compareResults() {
-    System.out.println("-- Wyniki --");
     double diff = newPrice - lastPrice;
     lastPrice = newPrice;
-    System.out.println("ostatni sentyment: " + lastResult);
-    System.out.println("różnica kursu: " + diff);
-    lastResult = newResult;
+    System.out.println("różnica kursu względem ostatniej wartości: " + diff);
+
   }
 
   @Async
