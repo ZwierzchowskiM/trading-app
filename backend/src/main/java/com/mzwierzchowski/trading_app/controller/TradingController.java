@@ -27,12 +27,7 @@ public class TradingController {
     return new ResponseEntity<>(HttpStatusCode.valueOf(200));
   }
 
-  @PostMapping("/start")
-  public String startStrategy() {
-    strategyRunner.startLoop();
-    System.out.println("Zadanie uruchomienia strategii");
-    return "Strategia uruchomiona!";
-  }
+
 
   @GetMapping("/status")
   public ResponseEntity getStatus() {
@@ -40,10 +35,4 @@ public class TradingController {
     return new ResponseEntity<>(HttpStatusCode.valueOf(200));
   }
 
-  @PostMapping("/stop")
-  public String stopStrategy() {
-    strategyRunner.stop();
-    System.out.println("Zadanie zatrzymania strategii");
-    return "Strategia zatrzymana!";
-  }
 }

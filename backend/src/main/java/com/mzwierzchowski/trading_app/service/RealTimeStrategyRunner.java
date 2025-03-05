@@ -23,176 +23,70 @@ import pro.xstore.api.message.response.ChartResponse;
 import pro.xstore.api.streaming.StreamingListener;
 import pro.xstore.api.sync.SyncAPIConnector;
 
+import javax.swing.*;
+
 @Service
 public class RealTimeStrategyRunner {
 
   private BarSeries series;
   private SyncAPIConnector connector;
-  private volatile boolean newCandle = false;
-  private volatile SCandleRecord newCandleRecord = null;
-  private volatile boolean running = true;
-  private final TradingRecord tradingRecord = new BaseTradingRecord();
-  private ChartResponse chartHistoricalData;
   private String symbol = "BITCOIN";
-  private static int MAX_BAR_COUNT = 200;
 
-  private double lastPrice =0 ;
-  private String lastResult = "";
+  private double lastPrice = 0;
   private double newPrice;
-  private String newResult;
   private StockTwitsResult stockTwitsResult;
 
-
   private StockTwitsService stockTwitsService;
-  private XtbService xtbService;
-  private final HistoricalDataConverter historicalDataConverter;
   private final StrategyEvaluator strategyEvaluator;
+  private BinanceService binanceService;
 
   public RealTimeStrategyRunner(
-          StockTwitsService stockTwitsService, XtbService xtbService,
-          HistoricalDataConverter historicalDataConverter,
-          StrategyEvaluator strategyEvaluator) {
-      this.stockTwitsService = stockTwitsService;
-      this.xtbService = xtbService;
-    this.historicalDataConverter = historicalDataConverter;
+      StockTwitsService stockTwitsService,
+      StrategyEvaluator strategyEvaluator,
+      BinanceService binanceService) {
+    this.stockTwitsService = stockTwitsService;
     this.strategyEvaluator = strategyEvaluator;
+    this.binanceService = binanceService;
   }
 
   public void getSinglePrice() {
 
-    String symbol2 = "BITCOIN";
-    connector = xtbService.connect();
     try {
-
-      newPrice = xtbService.getSymbol(connector, symbol2);
+      series = binanceService.getHistoricalBarSeries();
       stockTwitsResult = stockTwitsService.getStockSentiment();
-      System.out.println("new price: " + newPrice);
+      //printBar(series.getLastBar());
+      System.out.println("new price: " + series.getLastBar().getClosePrice());
       compareResults();
       System.out.println("--------------------------");
 
-    } catch (APIErrorResponse
-        | APICommunicationException
-        | APIReplyParseException
-        | APICommandConstructionException e) {
-      System.out.println("Bład API XTB");
-      e.printStackTrace();
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
-      connectorClose(connector);
-
-
   }
 
   private void compareResults() {
     double diff = newPrice - lastPrice;
     lastPrice = newPrice;
     System.out.println("różnica kursu względem ostatniej wartości: " + diff);
-
   }
 
-  @Async
-  public void startLoop() {
-
-    connector = xtbService.connect();
-    chartHistoricalData = xtbService.getHistoricalData(connector, symbol);
-    series = historicalDataConverter.convertToSeries(chartHistoricalData);
-    series.setMaximumBarCount(MAX_BAR_COUNT);
-    printSeries(series);
-    System.out.println();
-    subscribeCandles(connector);
-
-    while (running) {
-
-      if (newCandle) {
-        updateBarSeries(newCandleRecord);
-        strategyEvaluator.evaluate(series, tradingRecord);
-        newCandle = false;
-      }
-    }
-    unsubscribeCandles(connector);
-    connectorClose(connector);
-    System.out.println("stratategia zatrzymana");
+  void printBar(Bar bar){
+    System.out.println(
+            "bar: " +
+                     "\n" + "\tVolume: "
+                    + bar.getVolume()
+                    + "\n" + "\tOpen price: "
+                    + bar.getOpenPrice()
+                    + "\n" + "\tClose price: "
+                    + bar.getClosePrice()
+                    + "\n" + "\tTime: "
+                    + bar.getEndTime()
+                    + "\n" + "\tVolumen: "
+                    + bar.getVolume()
+                    + "\n" + "\tLow: "
+                    + bar.getLowPrice()
+                    + "\n" + "\tHigh: "
+                    + bar.getHighPrice());
   }
 
-  public void stop() {
-    running = false;
-  }
-
-  private void updateBarSeries(SCandleRecord candleRecord) {
-    if (candleRecord == null) {
-      System.err.println("Received null candleRecord, skipping update.");
-      return;
-    }
-    DateTimeFormatter formatter =
-        DateTimeFormatter.ofPattern("MMM dd, yyyy, h:mm:ss a", Locale.ENGLISH);
-    LocalDateTime localDateTime = LocalDateTime.parse(candleRecord.getCtmString(), formatter);
-    ZonedDateTime barTime = localDateTime.atZone(ZoneId.systemDefault());
-
-    double open = candleRecord.getOpen();
-    double high = candleRecord.getHigh();
-    double low = candleRecord.getLow();
-    double close = candleRecord.getClose();
-    double volume = candleRecord.getVol();
-
-    series.addBar(barTime, open, high, low, close, volume);
-    newCandleRecord = null;
-  }
-
-  public void subscribeCandles(SyncAPIConnector connector) {
-    StreamingListener sl =
-        new StreamingListener() {
-
-          public void receiveCandleRecord(SCandleRecord candleRecord) {
-            System.out.println("Stream candle record: " + candleRecord);
-            newCandle = true;
-            newCandleRecord = candleRecord;
-          }
-        };
-
-    try {
-      connector.connectStream(sl);
-      chartRangeRequiredCommand(connector, symbol);
-      connector.subscribeCandle(symbol);
-      System.out.println("symbol subscribed");
-    } catch (IOException | APICommunicationException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public void unsubscribeCandles(SyncAPIConnector connector) {
-    try {
-      connector.unsubscribeCandle(symbol);
-    } catch (APICommunicationException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public void connectorClose(SyncAPIConnector connector) {
-    try {
-      connector.close();
-    } catch (APICommunicationException e) {
-      System.out.println("close connector error");
-    }
-  }
-
-  void chartRangeRequiredCommand(SyncAPIConnector connector, String symbol) {
-    try {
-      APICommandFactory.executeChartLastCommand(connector, symbol, PERIOD_M1, 0L);
-    } catch (APICommandConstructionException
-        | APICommunicationException
-        | APIReplyParseException e) {
-      throw new RuntimeException(e);
-    } catch (APIErrorResponse e) {
-      System.out.println("chart range - błąd API");
-    }
-  }
-
-  void printSeries(BarSeries series) {
-
-    int countBar = series.getBarData().size();
-    for (int i = 0; i < countBar; i++) {
-      System.out.println(series.getBarData().get(i));
-    }
-  }
 }
