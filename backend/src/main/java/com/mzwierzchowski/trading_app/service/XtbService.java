@@ -24,31 +24,8 @@ import static pro.xstore.api.message.codes.PERIOD_CODE.PERIOD_M1;
 @Service
 public class XtbService {
 
-  @Value("${XTB_USERID}")
-  private String userId;
-  @Value("${XTB_PASS}")
-  private String password;
-
   private final RestTemplate restTemplate = new RestTemplate();
 
-  public SyncAPIConnector connect() {
-
-    try {
-      SyncAPIConnector connector = new SyncAPIConnector(ServerData.ServerEnum.DEMO);
-      LoginResponse loginResponse = null;
-      loginResponse = APICommandFactory.executeLoginCommand(connector, new Credentials(userId, password));
-      if (loginResponse.getStatus() == true) {
-       // System.out.println("User logged in");
-      }
-      return connector;
-    } catch (APICommandConstructionException
-        | APICommunicationException
-        | APIReplyParseException
-        | APIErrorResponse
-        | IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   ChartResponse getHistoricalData (SyncAPIConnector connector, String symbol){
 
