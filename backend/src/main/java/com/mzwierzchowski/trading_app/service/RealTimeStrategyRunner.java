@@ -54,9 +54,10 @@ public class RealTimeStrategyRunner {
     try {
       series = binanceService.getHistoricalBarSeries();
       stockTwitsResult = stockTwitsService.getStockSentiment();
-      //printBar(series.getLastBar());
+      printBar(series.getLastBar());
       System.out.println("new price: " + series.getLastBar().getClosePrice());
       compareResults();
+      strategyEvaluator.evaluate(series);
       System.out.println("--------------------------");
 
     } catch (IOException e) {
