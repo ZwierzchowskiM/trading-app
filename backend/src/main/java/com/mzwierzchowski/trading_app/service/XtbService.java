@@ -79,7 +79,7 @@ public class XtbService {
   // Uruchamiane co 5 minut: "0 */5 * * * *"
   @Scheduled(cron = "0 */5 * * * *")
   public void checkAppLive() {
-    String url = "https://trading-app-o7wc.onrender.com/api/trading/status";
+    String url = "https://trading-app-1-ly5x.onrender.com/api/trading/status";
     try {
       String response = restTemplate.getForObject(url, String.class);
       //System.out.println("Scheduled health check response: " + response);
@@ -90,7 +90,7 @@ public class XtbService {
 
   @Scheduled(cron = "0 */15 * * * *")
   public void checkPrice() {
-    String url = "https://trading-app-o7wc.onrender.com/api/trading/check";
+    String url = "https://trading-app-1-ly5x.onrender.com/api/trading/check";
     try {
       String response = restTemplate.getForObject(url, String.class);
       //System.out.println("Scheduled health check response: " + response);
