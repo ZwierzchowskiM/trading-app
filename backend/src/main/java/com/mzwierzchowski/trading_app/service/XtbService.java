@@ -88,7 +88,7 @@ public class XtbService {
     }
   }
 
-  @Scheduled(cron = "0 */30 * * * *")
+  @Scheduled(cron = "0 */15 * * * *")
   public void checkPrice() {
     String url = "https://trading-app-o7wc.onrender.com/api/trading/check";
     try {

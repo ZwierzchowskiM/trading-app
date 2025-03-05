@@ -1,29 +1,12 @@
 package com.mzwierzchowski.trading_app.service;
 
-import static pro.xstore.api.message.codes.PERIOD_CODE.PERIOD_M1;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
 import com.mzwierzchowski.trading_app.model.StockTwits.StockTwitsResult;
-import org.springframework.scheduling.annotation.Async;
+import java.io.IOException;
+import javax.swing.*;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
-import pro.xstore.api.message.command.APICommandFactory;
-import pro.xstore.api.message.error.APICommandConstructionException;
-import pro.xstore.api.message.error.APICommunicationException;
-import pro.xstore.api.message.error.APIReplyParseException;
-import pro.xstore.api.message.records.SCandleRecord;
-import pro.xstore.api.message.response.APIErrorResponse;
-import pro.xstore.api.message.response.ChartResponse;
-import pro.xstore.api.streaming.StreamingListener;
 import pro.xstore.api.sync.SyncAPIConnector;
-
-import javax.swing.*;
 
 @Service
 public class RealTimeStrategyRunner {
