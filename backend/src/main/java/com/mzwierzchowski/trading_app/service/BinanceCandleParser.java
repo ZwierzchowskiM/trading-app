@@ -15,8 +15,8 @@ import java.util.List;
 public class BinanceCandleParser {
 
     String symbol = "BTCUSDT";
-    String interval = "15m"; // interwał świec (np. 1h, 15m, 1d)
-    int limit = 100; // liczba świec do pobrania
+    String interval = "5m";
+    int limit = 100;
     String url = String.format("https://api.binance.com/api/v3/klines?symbol=%s&interval=%s&limit=%d",
             symbol, interval, limit);
 

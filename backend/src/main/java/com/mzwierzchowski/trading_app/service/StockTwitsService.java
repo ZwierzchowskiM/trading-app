@@ -79,7 +79,6 @@ public class StockTwitsService {
       System.out.println("Total posts: " + totalPosts);
       System.out.println("Bullish posts: " + bullishCount);
       System.out.println("Bearish posts: " + bearishCount);
-      System.out.println("Posts with no sentiment: " + nullSentimentCount);
 
       // Obliczanie procentowego udziału bullish i bearish (ignorujemy posty bez sentymentu)
       int effectivePosts = bullishCount + bearishCount;
@@ -95,7 +94,6 @@ public class StockTwitsService {
       if (previousBullishCount != -1 && previousBearishCount != -1) {
         bullishDiff = bullishCount - previousBullishCount;
         bearishDiff = bearishCount - previousBearishCount;
-        System.out.println("Difference from previous cycle:");
         System.out.println("Bullish diff: " + bullishDiff);
         System.out.println("Bearish diff: " + bearishDiff);
       } else {

@@ -6,19 +6,16 @@ import java.io.IOException;
 import javax.swing.*;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
-import pro.xstore.api.sync.SyncAPIConnector;
 
 @Service
 public class RealTimeStrategyRunner {
 
   private BarSeries series;
-  private SyncAPIConnector connector;
   private String symbol = "BITCOIN";
 
   private double lastPrice = 0;
   private double newPrice;
   private StockTwitsResult stockTwitsResult;
-
   private StockTwitsService stockTwitsService;
   private final StrategyEvaluator strategyEvaluator;
   private BinanceService binanceService;
@@ -38,7 +35,8 @@ public class RealTimeStrategyRunner {
       series = binanceService.getHistoricalBarSeries();
       stockTwitsResult = stockTwitsService.getStockSentiment();
       //printBar(series.getLastBar());
-      System.out.println("new price: " + series.getLastBar().getClosePrice());
+      newPrice = series.getLastBar().getClosePrice().doubleValue();
+      System.out.println("new price: " + newPrice);
       compareResults();
       strategyEvaluator.evaluate(series);
       System.out.println("--------------------------");
