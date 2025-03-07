@@ -15,6 +15,13 @@ public class StrategyEvaluator {
   Num exitPrice;
   double result;
 
+  private Num totalBalance; // Całkowity bilans strategii
+  private TradingRecord tradingRecord = new BaseTradingRecord(); // Rekord transakcji
+
+  public StrategyEvaluator() {
+    this.totalBalance = null; // Inicjalizacja na null, bo TA4J wymaga Num zamiast double
+  }
+
   public void evaluate(BarSeries series) {
 
     ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
@@ -31,44 +38,50 @@ public class StrategyEvaluator {
 
     Rule entryRule =
         new CrossedUpIndicatorRule(emaShort, emaLong) // EMA(10) przecina EMA(30) w górę
-            .and(new OverIndicatorRule(rsi, 40)); // RSI poniżej 30
+            .and(new OverIndicatorRule(rsi, 50)); // RSI powyżej 50
 
     Rule exitRule =
         new CrossedDownIndicatorRule(emaShort, emaLong) // EMA(10) przecina EMA(30) w dół
-            .and(new UnderIndicatorRule(rsi, 70)); // RSI powyżej 70
+            .and(new UnderIndicatorRule(rsi, 70)); // RSI poniżej 70
 
 
 
     Strategy strategy = new BaseStrategy(entryRule, exitRule);
-    TradingRecord tradingRecord = new BaseTradingRecord();
     lastIndex = series.getEndIndex();
+    Num currentPrice = closePrice.getValue(lastIndex);
+
     boolean shouldEnter = strategy.getEntryRule().isSatisfied(lastIndex, tradingRecord);
     boolean shouldExit = strategy.getExitRule().isSatisfied(lastIndex, tradingRecord);
 
-    if (shouldEnter) {
-      System.out.println("Wskaźniki. Sygnał kupna aktywny");
+    if (shouldEnter){
+      System.out.println("sygnał kupna");
+    }
+    if (shouldExit){
+      System.out.println("sygnał sprzedaży");
     }
 
-    if (shouldExit) {
-      System.out.println("Wskaźniki. Sygnał kupna sprzedaży");
+
+    Num tradeAmount = series.numOf(1);
+    if (shouldEnter && !tradingRecord.getCurrentPosition().isOpened()) {
+      System.out.println("Sygnał kupna aktywny! Kupuję za: " + currentPrice);
+      tradingRecord.enter(lastIndex, currentPrice, tradeAmount); // Kupujemy 1 jednostkę
     }
 
-    Rule entryRule_noRSI = new CrossedUpIndicatorRule(emaShort, emaLong);
+    if (shouldExit && tradingRecord.getCurrentPosition().isOpened()) {
+      Num entryPrice = tradingRecord.getCurrentPosition().getEntry().getNetPrice();
+      System.out.println("Sygnał sprzedaży! Sprzedaję za: " + currentPrice);
+      tradingRecord.exit(lastIndex, currentPrice, tradeAmount);
 
-    Rule exitRule_noRSI = new CrossedDownIndicatorRule(emaShort, emaLong);
+      Num profitOrLoss = currentPrice.minus(entryPrice);
+      totalBalance = (totalBalance == null) ? profitOrLoss : totalBalance.plus(profitOrLoss);
 
-    Strategy strategy2 = new BaseStrategy(entryRule_noRSI, exitRule_noRSI);
-    TradingRecord tradingRecord2 = new BaseTradingRecord();
-
-    lastIndex = series.getEndIndex();
-    boolean shouldEnter2 = strategy2.getEntryRule().isSatisfied(lastIndex, tradingRecord2);
-    boolean shouldExit2 = strategy2.getExitRule().isSatisfied(lastIndex, tradingRecord2);
-
-    if (shouldEnter2) {
-      System.out.println("Wskaźniki bez RSI. Sygnał kupna aktywny");
-    }
-    if (shouldExit2) {
-      System.out.println("Wskaźniki bez RSI. Sygnał kupna sprzedaży");
+      System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++");
+      // Po zamknięciu pozycji możemy wyliczyć zysk/stratę
+      System.out.println("Kupiono za: " + entryPrice + ", Sprzedano za: " + currentPrice);
+      System.out.println("Zysk/strata: " + currentPrice.minus(entryPrice));
+      System.out.println("------");
+      System.out.println("Całkowity bilans strategii: " + totalBalance);
+      System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
     }
   }
 }

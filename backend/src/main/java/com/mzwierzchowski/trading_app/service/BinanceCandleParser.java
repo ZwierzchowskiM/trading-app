@@ -40,6 +40,18 @@ public class BinanceCandleParser {
             candle.setTakerBuyQuoteVolume(new BigDecimal(node.get(10).asText()));
             candles.add(candle);
         }
+
+        // Sprawdzenie, czy ostatnia świeca jest zamknięta
+        if (!candles.isEmpty()) {
+            Candle lastCandle = candles.get(candles.size() - 1);
+            long currentTimeMillis = System.currentTimeMillis();
+
+            if (lastCandle.getCloseTime() > currentTimeMillis) {
+//                System.out.println("Ostatnia świeca jest niezamknięta. Usuwam ją.");
+                candles.remove(candles.size() - 1);
+            }
+        }
+
         return candles;
     }
 }
