@@ -33,7 +33,7 @@ public class RealTimeStrategyRunner {
 
     try {
       series = binanceService.getHistoricalBarSeries();
-      stockTwitsResult = stockTwitsService.getStockSentiment();
+      //stockTwitsResult = stockTwitsService.getStockSentiment();
       //printBar(series.getLastBar());
       newPrice = series.getLastBar().getClosePrice().doubleValue();
       System.out.println("new price: " + newPrice);

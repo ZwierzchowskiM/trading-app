@@ -1,14 +1,19 @@
 package com.mzwierzchowski.trading_app.service;
 
 import com.binance.connector.client.impl.SpotClientImpl;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Service
 public class BinanceClient {
     private final SpotClientImpl client;
 
-    public BinanceClient(String apiKey, String secretKey) {
+
+    public BinanceClient(@Value("${binance.apiKey}") String apiKey,
+                         @Value("${binance.secret}") String secretKey) {
         client = new SpotClientImpl(apiKey, secretKey);
     }
 
