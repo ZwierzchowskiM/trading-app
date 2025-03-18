@@ -11,15 +11,16 @@ import org.ta4j.core.rules.*;
 @Service
 public class StrategyEvaluator {
 
-  Num enterPrice;
-  Num exitPrice;
-  double result;
-
   private Num totalBalance; // Całkowity bilans strategii
   private TradingRecord tradingRecord = new BaseTradingRecord(); // Rekord transakcji
+  private BinanceClient binanceClient;
 
-  public StrategyEvaluator() {
-    this.totalBalance = null; // Inicjalizacja na null, bo TA4J wymaga Num zamiast double
+  private String symbol = "BTCUSDT";
+  private double quantity = 0.0005;
+
+  public StrategyEvaluator(BinanceClient binanceClient) {
+      this.binanceClient = binanceClient;
+      this.totalBalance = null;
   }
 
   public void evaluate(BarSeries series) {
@@ -54,34 +55,34 @@ public class StrategyEvaluator {
     boolean shouldExit = strategy.getExitRule().isSatisfied(lastIndex, tradingRecord);
 
     if (shouldEnter){
-      System.out.println("sygnał kupna");
+      String response = binanceClient.placeOrder(symbol, "BUY", "MARKET", quantity);
     }
     if (shouldExit){
-      System.out.println("sygnał sprzedaży");
+      String response = binanceClient.placeOrder(symbol, "SELL", "MARKET", quantity);
     }
 
 
-    Num tradeAmount = series.numOf(1);
-    if (shouldEnter && !tradingRecord.getCurrentPosition().isOpened()) {
-      System.out.println("Sygnał kupna aktywny! Kupuję za: " + currentPrice);
-      tradingRecord.enter(lastIndex, currentPrice, tradeAmount); // Kupujemy 1 jednostkę
-    }
-
-    if (shouldExit && tradingRecord.getCurrentPosition().isOpened()) {
-      Num entryPrice = tradingRecord.getCurrentPosition().getEntry().getNetPrice();
-      System.out.println("Sygnał sprzedaży! Sprzedaję za: " + currentPrice);
-      tradingRecord.exit(lastIndex, currentPrice, tradeAmount);
-
-      Num profitOrLoss = currentPrice.minus(entryPrice);
-      totalBalance = (totalBalance == null) ? profitOrLoss : totalBalance.plus(profitOrLoss);
-
-      System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++");
-      // Po zamknięciu pozycji możemy wyliczyć zysk/stratę
-      System.out.println("Kupiono za: " + entryPrice + ", Sprzedano za: " + currentPrice);
-      System.out.println("Zysk/strata: " + currentPrice.minus(entryPrice));
-      System.out.println("------");
-      System.out.println("Całkowity bilans strategii: " + totalBalance);
-      System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
-    }
+//    Num tradeAmount = series.numOf(1);
+//    if (shouldEnter && !tradingRecord.getCurrentPosition().isOpened()) {
+//      System.out.println("Sygnał kupna aktywny! Kupuję za: " + currentPrice);
+//      tradingRecord.enter(lastIndex, currentPrice, tradeAmount); // Kupujemy 1 jednostkę
+//    }
+//
+//    if (shouldExit && tradingRecord.getCurrentPosition().isOpened()) {
+//      Num entryPrice = tradingRecord.getCurrentPosition().getEntry().getNetPrice();
+//      System.out.println("Sygnał sprzedaży! Sprzedaję za: " + currentPrice);
+//      tradingRecord.exit(lastIndex, currentPrice, tradeAmount);
+//
+//      Num profitOrLoss = currentPrice.minus(entryPrice);
+//      totalBalance = (totalBalance == null) ? profitOrLoss : totalBalance.plus(profitOrLoss);
+//
+//      System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++");
+//      // Po zamknięciu pozycji możemy wyliczyć zysk/stratę
+//      System.out.println("Kupiono za: " + entryPrice + ", Sprzedano za: " + currentPrice);
+//      System.out.println("Zysk/strata: " + currentPrice.minus(entryPrice));
+//      System.out.println("------");
+//      System.out.println("Całkowity bilans strategii: " + totalBalance);
+//      System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
+//    }
   }
 }

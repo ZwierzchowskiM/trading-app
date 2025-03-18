@@ -11,18 +11,18 @@ import java.util.List;
 public class BinanceService {
 
   BinanceCandleParser binanceCandleParser;
-  CandleConverter candleConverter;
+  BinanceCandleConverter binanceCandleConverter;
 
-  public BinanceService(BinanceCandleParser binanceCandleParser, CandleConverter candleConverter) {
+  public BinanceService(BinanceCandleParser binanceCandleParser, BinanceCandleConverter binanceCandleConverter) {
     this.binanceCandleParser = binanceCandleParser;
-    this.candleConverter = candleConverter;
+    this.binanceCandleConverter = binanceCandleConverter;
   }
 
   public BarSeries getHistoricalBarSeries() throws IOException {
 
     List<Candle> candleList = binanceCandleParser.parseCandles();
     //candleList.remove(candleList.size() - 1);
-    BarSeries series = candleConverter.convert(candleList);
+    BarSeries series = binanceCandleConverter.convert(candleList);
 
     return series;
   }

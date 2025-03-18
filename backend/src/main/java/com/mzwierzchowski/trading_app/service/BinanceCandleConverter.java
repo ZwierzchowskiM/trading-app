@@ -9,7 +9,7 @@ import org.ta4j.core.BarSeries;
 import org.ta4j.core.BaseBarSeries;
 
 @Service
-public class CandleConverter {
+public class BinanceCandleConverter {
 
   public BarSeries convert(List<Candle> candles) {
     BarSeries series = new BaseBarSeries("BTC/USDT");
