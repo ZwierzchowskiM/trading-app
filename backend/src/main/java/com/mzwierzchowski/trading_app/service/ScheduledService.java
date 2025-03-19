@@ -23,7 +23,7 @@ public class ScheduledService {
     }
   }
 
-  @Scheduled(cron = "0 */1 * * * *")
+  @Scheduled(cron = "0 */5 * * * *")
   public void checkPrice() {
     String url = "https://trading-app-1-ly5x.onrender.com/api/trading/check";
     try {
