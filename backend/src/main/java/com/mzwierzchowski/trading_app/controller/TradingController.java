@@ -2,6 +2,7 @@ package com.mzwierzchowski.trading_app.controller;
 
 import com.mzwierzchowski.trading_app.service.BinanceClient;
 import com.mzwierzchowski.trading_app.service.RealTimeStrategyRunner;
+import com.mzwierzchowski.trading_app.service.StrategyEvaluator;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -18,10 +19,12 @@ public class TradingController {
 
   private final RealTimeStrategyRunner strategyRunner;
   private BinanceClient binanceClient;
+  private StrategyEvaluator strategyEvaluator;
 
-  public TradingController(RealTimeStrategyRunner strategyRunner, BinanceClient binanceClient) {
+  public TradingController(RealTimeStrategyRunner strategyRunner, BinanceClient binanceClient, StrategyEvaluator strategyEvaluator) {
     this.strategyRunner = strategyRunner;
       this.binanceClient = binanceClient;
+      this.strategyEvaluator = strategyEvaluator;
   }
 
   @GetMapping("/check")
@@ -53,6 +56,17 @@ public class TradingController {
 
     String response = binanceClient.placeOrder(symbol, "SELL", "MARKET", quantity);
     return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/set-params")
+  public ResponseEntity<String> setTradingParams(
+          @RequestParam String symbol,
+          @RequestParam double quantity) {
+
+    strategyEvaluator.setSymbol(symbol);
+    strategyEvaluator.setQuantity(quantity);
+
+    return ResponseEntity.ok("Zaktualizowano parametry: symbol = " + symbol + ", ilość = " + quantity);
   }
 
 }

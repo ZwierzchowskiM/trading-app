@@ -1,6 +1,8 @@
 package com.mzwierzchowski.trading_app.service;
 
 import com.mzwierzchowski.trading_app.model.BitcoinPosition;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.EMAIndicator;
@@ -10,6 +12,8 @@ import org.ta4j.core.num.Num;
 import org.ta4j.core.rules.*;
 
 @Service
+@Getter
+@Setter
 public class StrategyEvaluator {
 
   private Num totalBalance; // Całkowity bilans strategii
@@ -17,13 +21,14 @@ public class StrategyEvaluator {
   private BinanceClient binanceClient;
   private BitcoinPosition position;
 
-  private String symbol = "BTCUSDT";
-  private double quantity = 0.00005;
+  private String symbol = "BTCUSDC";
+  private double quantity;
 
   public StrategyEvaluator(BinanceClient binanceClient) {
     this.binanceClient = binanceClient;
     this.totalBalance = null;
     position = new BitcoinPosition();
+    quantity = 0.0001;
   }
 
   public void evaluate(BarSeries series) {
@@ -32,29 +37,27 @@ public class StrategyEvaluator {
 
     EMAIndicator ema10 = new EMAIndicator(closePrice, 10);
     EMAIndicator ema50 = new EMAIndicator(closePrice, 50);
-    EMAIndicator ema100 = new EMAIndicator(closePrice, 100);
+    EMAIndicator ema70 = new EMAIndicator(closePrice, 70);
 
     RSIIndicator rsi = new RSIIndicator(closePrice, 16);
 
     int lastIndex = series.getEndIndex();
     System.out.println("EMA(10): " + ema10.getValue(lastIndex));
     System.out.println("EMA(50): " + ema50.getValue(lastIndex));
-    System.out.println("EMA(100): " + ema100.getValue(lastIndex));
-    System.out.println("RSI(14): " + rsi.getValue(lastIndex));
+    System.out.println("EMA(70): " + ema70.getValue(lastIndex));
+    //System.out.println("RSI(14): " + rsi.getValue(lastIndex));
 
     Rule entryRule =
         new CrossedUpIndicatorRule(ema10, ema50) // EMA(10) przecina EMA(50) w górę
-            .and(new OverIndicatorRule(rsi, 60)) // RSI powyżej 60
-            .and(new OverIndicatorRule(closePrice, ema100));
+            .and(new OverIndicatorRule(closePrice, ema70));
 
     Rule exitRule =
         new CrossedDownIndicatorRule(ema10, ema50) // EMA(10) przecina EMA(50) w dół
-            .and(new UnderIndicatorRule(rsi, 70)) // RSI poniżej 70
-            .and(new UnderIndicatorRule(closePrice, ema100));
+            .and(new UnderIndicatorRule(closePrice, ema70));
 
     Strategy strategy = new BaseStrategy(entryRule, exitRule);
     lastIndex = series.getEndIndex();
-    //Num currentPrice = closePrice.getValue(lastIndex);
+    Num currentPrice = closePrice.getValue(lastIndex);
 
     boolean shouldEnter = strategy.getEntryRule().isSatisfied(lastIndex, tradingRecord);
     boolean shouldExit = strategy.getExitRule().isSatisfied(lastIndex, tradingRecord);
@@ -62,13 +65,17 @@ public class StrategyEvaluator {
     if (shouldEnter && !position.isOpened()) {
       String response = binanceClient.placeOrder(symbol, "BUY", "MARKET", quantity);
       System.out.println(response);
+      System.out.println("Sygnał kupna aktywny! Kupuję za: " + currentPrice);
       position.setOpened(true);
     }
     if (shouldExit && position.isOpened()) {
       String response = binanceClient.placeOrder(symbol, "SELL", "MARKET", quantity);
       System.out.println(response);
+      System.out.println("Sygnał sprzedaży! Sprzedaję za: " + currentPrice);
       position.setOpened(false);
     }
+
+
 
     //    Num tradeAmount = series.numOf(1);
     //    if (shouldEnter && !tradingRecord.getCurrentPosition().isOpened()) {
