@@ -3,6 +3,7 @@ package com.mzwierzchowski.trading_app.controller;
 import com.mzwierzchowski.trading_app.service.BinanceClient;
 import com.mzwierzchowski.trading_app.service.RealTimeStrategyRunner;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,21 +38,21 @@ public class TradingController {
   }
 
   @GetMapping("/buy")
-  public ResponseEntity placeOrderBuy() {
+  public ResponseEntity<String> placeOrderBuy(
+          @RequestParam String symbol,
+          @RequestParam double quantity) {
 
-    String response = binanceClient.placeOrder("BTCUSDT", "BUY", "MARKET", 0.00005);
-    System.out.println(response);
-
-    return new ResponseEntity<>(HttpStatusCode.valueOf(200));
+    String response = binanceClient.placeOrder(symbol, "BUY", "MARKET", quantity);
+    return ResponseEntity.ok(response);
   }
 
   @GetMapping("/sell")
-  public ResponseEntity placeOrderSell() {
+  public ResponseEntity<String> placeOrderSell(
+          @RequestParam String symbol,
+          @RequestParam double quantity) {
 
-    String response = binanceClient.placeOrder("BTCUSDT", "SELL", "MARKET", 0.00005);
-    System.out.println(response);
-
-    return new ResponseEntity<>(HttpStatusCode.valueOf(200));
+    String response = binanceClient.placeOrder(symbol, "SELL", "MARKET", quantity);
+    return ResponseEntity.ok(response);
   }
 
 }
