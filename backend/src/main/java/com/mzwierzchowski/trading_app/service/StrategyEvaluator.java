@@ -16,8 +16,8 @@ import org.ta4j.core.rules.*;
 @Setter
 public class StrategyEvaluator {
 
-  private Num totalBalance; // Całkowity bilans strategii
-  private TradingRecord tradingRecord = new BaseTradingRecord(); // Rekord transakcji
+  private Num totalBalance;
+  private TradingRecord tradingRecord = new BaseTradingRecord();
   private BinanceClient binanceClient;
   private BitcoinPosition position;
 
@@ -67,12 +67,16 @@ public class StrategyEvaluator {
       System.out.println(response);
       System.out.println("Sygnał kupna aktywny! Kupuję za: " + currentPrice);
       position.setOpened(true);
+      position.setOpenPrice(currentPrice.doubleValue());
     }
     if (shouldExit && position.isOpened()) {
       String response = binanceClient.placeOrder(symbol, "SELL", "MARKET", quantity);
       System.out.println(response);
       System.out.println("Sygnał sprzedaży! Sprzedaję za: " + currentPrice);
       position.setOpened(false);
+      position.setClosePrice(currentPrice.doubleValue());
+      double result = position.getClosePrice() - position.getOpenPrice();
+      System.out.println("Bilas pozycji: " + result);
     }
 
 

@@ -8,5 +8,7 @@ import lombok.Setter;
 public class BitcoinPosition {
 
     private boolean isOpened;
+    private double openPrice;
+    private double closePrice;
 
 }

@@ -37,7 +37,7 @@ public class RealTimeStrategyRunner {
       //printBar(series.getLastBar());
       newPrice = series.getLastBar().getClosePrice().doubleValue();
       System.out.println("new price: " + newPrice);
-      compareResults();
+      //compareResults();
       strategyEvaluator.evaluate(series);
       System.out.println("--------------------------");
 
