@@ -14,7 +14,7 @@ import java.util.List;
 @Service
 public class BinanceCandleParser {
 
-    String symbol = "BTCUSDT";
+    String symbol = "BTCUSDC";
     String interval = "5m";
     int limit = 100;
     String url = String.format("https://api.binance.com/api/v3/klines?symbol=%s&interval=%s&limit=%d",
