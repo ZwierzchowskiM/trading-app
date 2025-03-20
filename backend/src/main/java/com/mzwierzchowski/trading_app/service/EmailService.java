@@ -1,9 +1,14 @@
 package com.mzwierzchowski.trading_app.service;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.mzwierzchowski.trading_app.model.TradePosition;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -24,8 +29,7 @@ public class EmailService {
     this.googleOAuth2Service = googleOAuth2Service;
   }
 
-  public void sendPriceNotification(String to, String subject, Map<String, Object> model)
-      throws Exception {
+  public void sendTradeNotification(String to, String type, TradePosition position) throws Exception {
     String email = "pricetrakcer.alerts@gmail.com";
 
     Credential credential = googleOAuth2Service.getCredentials();
@@ -46,36 +50,46 @@ public class EmailService {
     props.put("mail.smtp.host", "smtp.gmail.com");
     props.put("mail.smtp.port", "587");
 
-    log.info("SMTP properties set, preparing email session");
-
-    Session session =
-        Session.getInstance(
-            props,
-            new Authenticator() {
-              @Override
-              protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(email, accessToken);
-              }
-            });
+    Session session = Session.getInstance(props, new Authenticator() {
+      @Override
+      protected PasswordAuthentication getPasswordAuthentication() {
+        return new PasswordAuthentication(email, accessToken);
+      }
+    });
 
     try {
       MimeMessage message = new MimeMessage(session);
       message.setFrom(new InternetAddress(email));
-      message.setSubject(subject);
       message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
-      message.setHeader("X-Entity-ID", UUID.randomUUID().toString());
 
-      Context context = new Context();
-      context.setVariables(model);
-      String htmlContent = templateEngine.process("email-template", context);
-      message.setContent(htmlContent, "text/html; charset=utf-8");
+      String htmlContent;
+
+
+      if ("BUY".equals(type)) {
+        message.setSubject("Nowa transakcja: BUY");
+        htmlContent = "<h2>Nowa transakcja: BUY</h2>" +
+                "<p><b>Cena zakupu:</b> " + position.getOpenPrice() + " USDT</p>" +
+                "<p><b>Data otwarcia:</b> " + position.getOpenDate() + "</p>";
+        message.setContent(htmlContent, "text/html; charset=utf-8");
+      } else {
+        message.setSubject("Nowa transakcja: SELL");
+        htmlContent = "<h2>Nowa transakcja: SELL</h2>" +
+                "<p><b>Data otwarcia:</b> " + position.getOpenDate() +
+                "<p><b>Data zamknięcia:</b> " + position.getCloseDate() +
+                "<p><b>Cena zakupu:</b> " + position.getOpenPrice() + " USDT</p>" +
+                "<p><b>Cena sprzedaży:</b> " + position.getClosePrice() + " USDT</p>" +
+                "<p><b>Zysk/Strata:</b> " + position.getResult() + " USDT</p>";
+        message.setContent(htmlContent, "text/html; charset=utf-8");
+      }
+
 
       Transport.send(message);
-      log.info("Email successfully sent to: {}", to);
+      log.info("Trade notification sent to: {}", to);
 
     } catch (MessagingException e) {
-      log.error("Failed to send email to: {}", to, e);
+      log.error("Failed to send trade notification to: {}", to, e);
       throw e;
     }
   }
+
 }

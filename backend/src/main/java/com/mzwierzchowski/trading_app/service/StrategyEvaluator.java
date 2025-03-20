@@ -1,6 +1,7 @@
 package com.mzwierzchowski.trading_app.service;
 
-import com.mzwierzchowski.trading_app.model.BitcoinPosition;
+import com.mzwierzchowski.trading_app.model.TradePosition;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
@@ -19,15 +20,19 @@ public class StrategyEvaluator {
   private Num totalBalance;
   private TradingRecord tradingRecord = new BaseTradingRecord();
   private BinanceClient binanceClient;
-  private BitcoinPosition position;
+  private TradePosition position;
 
   private String symbol = "BTCUSDC";
   private double quantity;
 
-  public StrategyEvaluator(BinanceClient binanceClient) {
+  private final EmailService emailService;
+  private final String notificationEmail = "app.mzwierzchowski@gmail.com";
+
+  public StrategyEvaluator(BinanceClient binanceClient, EmailService emailService) {
     this.binanceClient = binanceClient;
-    this.totalBalance = null;
-    position = new BitcoinPosition();
+      this.emailService = emailService;
+      this.totalBalance = null;
+    position = new TradePosition();
     quantity = 0.0001;
   }
 
@@ -45,7 +50,7 @@ public class StrategyEvaluator {
     System.out.println("EMA(10): " + ema10.getValue(lastIndex));
     System.out.println("EMA(50): " + ema50.getValue(lastIndex));
     System.out.println("EMA(70): " + ema70.getValue(lastIndex));
-    //System.out.println("RSI(14): " + rsi.getValue(lastIndex));
+    System.out.println("Close: " + closePrice.getValue(lastIndex));
 
     Rule entryRule =
         new CrossedUpIndicatorRule(ema10, ema50) // EMA(10) przecina EMA(50) w górę
@@ -67,41 +72,34 @@ public class StrategyEvaluator {
       System.out.println(response);
       System.out.println("Sygnał kupna aktywny! Kupuję za: " + currentPrice);
       position.setOpened(true);
+      position.setOpenDate(LocalDateTime.now());
       position.setOpenPrice(currentPrice.doubleValue());
+      try {
+        emailService.sendTradeNotification(notificationEmail, "KUPNO", position);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+
     }
+
     if (shouldExit && position.isOpened()) {
       String response = binanceClient.placeOrder(symbol, "SELL", "MARKET", quantity);
       System.out.println(response);
       System.out.println("Sygnał sprzedaży! Sprzedaję za: " + currentPrice);
-      position.setOpened(false);
-      position.setClosePrice(currentPrice.doubleValue());
       double result = position.getClosePrice() - position.getOpenPrice();
       System.out.println("Bilas pozycji: " + result);
+
+      position.setOpened(false);
+      position.setClosePrice(currentPrice.doubleValue());
+      position.setCloseDate(LocalDateTime.now());
+      position.setResult(result);
+
+      try {
+        emailService.sendTradeNotification(notificationEmail, "SPRZEDAŻ", position);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
-
-
-    //    Num tradeAmount = series.numOf(1);
-    //    if (shouldEnter && !tradingRecord.getCurrentPosition().isOpened()) {
-    //      System.out.println("Sygnał kupna aktywny! Kupuję za: " + currentPrice);
-    //      tradingRecord.enter(lastIndex, currentPrice, tradeAmount); // Kupujemy 1 jednostkę
-    //    }
-    //
-    //    if (shouldExit && tradingRecord.getCurrentPosition().isOpened()) {
-    //      Num entryPrice = tradingRecord.getCurrentPosition().getEntry().getNetPrice();
-    //      System.out.println("Sygnał sprzedaży! Sprzedaję za: " + currentPrice);
-    //      tradingRecord.exit(lastIndex, currentPrice, tradeAmount);
-    //
-    //      Num profitOrLoss = currentPrice.minus(entryPrice);
-    //      totalBalance = (totalBalance == null) ? profitOrLoss : totalBalance.plus(profitOrLoss);
-    //
-    //      System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++");
-    //      // Po zamknięciu pozycji możemy wyliczyć zysk/stratę
-    //      System.out.println("Kupiono za: " + entryPrice + ", Sprzedano za: " + currentPrice);
-    //      System.out.println("Zysk/strata: " + currentPrice.minus(entryPrice));
-    //      System.out.println("------");
-    //      System.out.println("Całkowity bilans strategii: " + totalBalance);
-    //      System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
-    //    }
   }
 }

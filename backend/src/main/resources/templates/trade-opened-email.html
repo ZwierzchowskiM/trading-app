@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Powiadomienie o otwarciu pozycji</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px;">
+
+<div style="background-color: #ffffff; border-radius: 8px; padding: 20px; max-width: 600px; margin: 0 auto; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+    <h2 style="color: #333333; margin-bottom: 20px;">Powiadomienie o otwarciu pozycji</h2>
+
+    <p style="color: #555555; margin-bottom: 20px;">Cześć,</p>
+    <p style="color: #555555; margin-bottom: 20px;">
+        Otworzono nową pozycję dla Bitcoina!
+        Data otwarcia: <strong th:text="${openDate}">DATA</strong>
+        Cena otwarcia: <strong th:text="${openPrice + ' USD'}">0.00 USD</strong>
+    </p>
+
+    <p style="color: #555555; margin-bottom: 20px;">Będziemy Cię informować o zamknięciu pozycji.</p>
+
+    <p style="display:none;">ID wiadomości: [[${#dates.format(#dates.createNow(), 'yyyyMMddHHmmss')}]]</p>
+
+</div>
+
+</body>
+</html>
