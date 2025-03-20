@@ -63,16 +63,19 @@ public class EmailService {
       message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
 
       String htmlContent;
-
+      // Tworzenie unikalnego Message-ID
+      String messageId = "<" + UUID.randomUUID().toString() + "trading-app.com>"; // możesz użyć swojej domeny
+      message.setHeader("Message-ID", messageId);
 
       if ("BUY".equals(type)) {
-        message.setSubject("Nowa transakcja: BUY");
+
+        message.setSubject("Nowa transakcja: BUY ---" + UUID.randomUUID());
         htmlContent = "<h2>Nowa transakcja: BUY</h2>" +
                 "<p><b>Cena zakupu:</b> " + position.getOpenPrice() + " USDT</p>" +
                 "<p><b>Data otwarcia:</b> " + position.getOpenDate() + "</p>";
         message.setContent(htmlContent, "text/html; charset=utf-8");
       } else {
-        message.setSubject("Nowa transakcja: SELL");
+        message.setSubject("Nowa transakcja: SELL ---" + UUID.randomUUID());
         htmlContent = "<h2>Nowa transakcja: SELL</h2>" +
                 "<p><b>Data otwarcia:</b> " + position.getOpenDate() +
                 "<p><b>Data zamknięcia:</b> " + position.getCloseDate() +

@@ -75,7 +75,7 @@ public class StrategyEvaluator {
       position.setOpenDate(LocalDateTime.now());
       position.setOpenPrice(currentPrice.doubleValue());
       try {
-        emailService.sendTradeNotification(notificationEmail, "KUPNO", position);
+        emailService.sendTradeNotification(notificationEmail, "BUY", position);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -95,7 +95,7 @@ public class StrategyEvaluator {
       position.setResult(result);
 
       try {
-        emailService.sendTradeNotification(notificationEmail, "SPRZEDAŻ", position);
+        emailService.sendTradeNotification(notificationEmail, "SELL", position);
       } catch (Exception e) {
         e.printStackTrace();
       }
