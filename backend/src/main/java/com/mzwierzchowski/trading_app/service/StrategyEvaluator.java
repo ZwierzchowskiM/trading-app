@@ -2,12 +2,13 @@ package com.mzwierzchowski.trading_app.service;
 
 import com.mzwierzchowski.trading_app.model.TradePosition;
 import java.time.LocalDateTime;
+
+import com.mzwierzchowski.trading_app.repository.TradePositionRepository;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.EMAIndicator;
-import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.Num;
 import org.ta4j.core.rules.*;
@@ -23,17 +24,20 @@ public class StrategyEvaluator {
   private TradePosition position;
 
   private String symbol = "BTCUSDC";
-  private double quantity;
-
-  private final EmailService emailService;
+  private double quantity = 0.0001;
   private final String notificationEmail = "app.mzwierzchowski@gmail.com";
 
-  public StrategyEvaluator(BinanceClient binanceClient, EmailService emailService) {
+  private final EmailService emailService;
+  private final TradePositionRepository tradePositionRepository;
+
+  public StrategyEvaluator(
+      BinanceClient binanceClient,
+      EmailService emailService,
+      TradePositionRepository tradePositionRepository) {
     this.binanceClient = binanceClient;
-      this.emailService = emailService;
-      this.totalBalance = null;
-    position = new TradePosition();
-    quantity = 0.0001;
+    this.emailService = emailService;
+    this.tradePositionRepository = tradePositionRepository;
+    this.totalBalance = null;
   }
 
   public void evaluate(BarSeries series) {
@@ -43,8 +47,6 @@ public class StrategyEvaluator {
     EMAIndicator ema10 = new EMAIndicator(closePrice, 10);
     EMAIndicator ema50 = new EMAIndicator(closePrice, 50);
     EMAIndicator ema70 = new EMAIndicator(closePrice, 70);
-
-    RSIIndicator rsi = new RSIIndicator(closePrice, 16);
 
     int lastIndex = series.getEndIndex();
     System.out.println("EMA(10): " + ema10.getValue(lastIndex));
@@ -67,39 +69,49 @@ public class StrategyEvaluator {
     boolean shouldEnter = strategy.getEntryRule().isSatisfied(lastIndex, tradingRecord);
     boolean shouldExit = strategy.getExitRule().isSatisfied(lastIndex, tradingRecord);
 
-    if (shouldEnter && !position.isOpened()) {
+    if (shouldEnter) {
       String response = binanceClient.placeOrder(symbol, "BUY", "MARKET", quantity);
       System.out.println(response);
       System.out.println("Sygnał kupna aktywny! Kupuję za: " + currentPrice);
-      position.setOpened(true);
-      position.setOpenDate(LocalDateTime.now());
-      position.setOpenPrice(currentPrice.doubleValue());
+
+      TradePosition newPosition = new TradePosition();
+      newPosition.setOpened(true);
+      newPosition.setOpenDate(LocalDateTime.now());
+      newPosition.setOpenPrice(currentPrice.doubleValue());
+      tradePositionRepository.save(newPosition);
+
       try {
         emailService.sendTradeNotification(notificationEmail, "BUY", position);
       } catch (Exception e) {
         e.printStackTrace();
       }
-
     }
 
-    if (shouldExit && position.isOpened()) {
-      String response = binanceClient.placeOrder(symbol, "SELL", "MARKET", quantity);
-      System.out.println(response);
-      System.out.println("Sygnał sprzedaży! Sprzedaję za: " + currentPrice);
-      double result = position.getClosePrice() - position.getOpenPrice();
-      System.out.println("Bilas pozycji: " + result);
+    if (shouldExit) {
+      TradePosition openPosition =
+          tradePositionRepository.findAll().stream()
+              .filter(TradePosition::isOpened)
+              .findFirst()
+              .orElse(null);
 
-      position.setOpened(false);
-      position.setClosePrice(currentPrice.doubleValue());
-      position.setCloseDate(LocalDateTime.now());
-      position.setResult(result);
+      if (openPosition != null) {
+        String response = binanceClient.placeOrder(symbol, "SELL", "MARKET", quantity);
+        System.out.println(response);
+        System.out.println("Sygnał sprzedaży! Sprzedaję za: " + currentPrice);
 
-      try {
-        emailService.sendTradeNotification(notificationEmail, "SELL", position);
-      } catch (Exception e) {
-        e.printStackTrace();
+        openPosition.setOpened(false);
+        openPosition.setClosePrice(currentPrice.doubleValue());
+        openPosition.setCloseDate(LocalDateTime.now());
+        openPosition.setResult(openPosition.getClosePrice() - openPosition.getOpenPrice());
+
+        tradePositionRepository.save(openPosition);
+
+        try {
+          emailService.sendTradeNotification(notificationEmail, "SELL", position);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
       }
     }
-
   }
 }

@@ -16,11 +16,11 @@ public class TradePosition {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private boolean isOpened;         // Czy pozycja jest otwarta
-    private double openPrice;         // Cena otwarcia
-    private double closePrice;        // Cena zamknięcia
-    private double result;            // Wynik transakcji
-    private LocalDateTime openDate;   // Data i czas otwarcia
-    private LocalDateTime closeDate;  // Data i czas zamknięcia
+    private boolean isOpened;
+    private double openPrice;
+    private double closePrice;
+    private double result;
+    private LocalDateTime openDate;
+    private LocalDateTime closeDate;
 
 }
