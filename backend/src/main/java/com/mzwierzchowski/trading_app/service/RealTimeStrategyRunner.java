@@ -3,7 +3,7 @@ package com.mzwierzchowski.trading_app.service;
 
 import com.mzwierzchowski.trading_app.model.StockTwits.StockTwitsResult;
 import java.io.IOException;
-import javax.swing.*;
+
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
 
@@ -17,15 +17,15 @@ public class RealTimeStrategyRunner {
   private double newPrice;
   private StockTwitsResult stockTwitsResult;
   private StockTwitsService stockTwitsService;
-  private final StrategyEvaluator strategyEvaluator;
+  private final StrategyEvaluatorService strategyEvaluatorService;
   private BinanceService binanceService;
 
   public RealTimeStrategyRunner(
       StockTwitsService stockTwitsService,
-      StrategyEvaluator strategyEvaluator,
+      StrategyEvaluatorService strategyEvaluatorService,
       BinanceService binanceService) {
     this.stockTwitsService = stockTwitsService;
-    this.strategyEvaluator = strategyEvaluator;
+    this.strategyEvaluatorService = strategyEvaluatorService;
     this.binanceService = binanceService;
   }
 
@@ -38,7 +38,7 @@ public class RealTimeStrategyRunner {
       newPrice = series.getLastBar().getClosePrice().doubleValue();
       System.out.println("new price: " + newPrice);
       //compareResults();
-      strategyEvaluator.evaluate(series);
+      strategyEvaluatorService.evaluate(series);
       System.out.println("--------------------------");
 
     } catch (IOException e) {

@@ -16,7 +16,7 @@ import org.ta4j.core.rules.*;
 @Service
 @Getter
 @Setter
-public class StrategyEvaluator {
+public class StrategyEvaluatorService {
 
   private Num totalBalance;
   private TradingRecord tradingRecord = new BaseTradingRecord();
@@ -30,7 +30,7 @@ public class StrategyEvaluator {
   private final EmailService emailService;
   private final TradePositionRepository tradePositionRepository;
 
-  public StrategyEvaluator(
+  public StrategyEvaluatorService(
       BinanceClient binanceClient,
       EmailService emailService,
       TradePositionRepository tradePositionRepository) {
@@ -78,6 +78,7 @@ public class StrategyEvaluator {
       newPosition.setOpened(true);
       newPosition.setOpenDate(LocalDateTime.now());
       newPosition.setOpenPrice(currentPrice.doubleValue());
+      newPosition.setQuantity(quantity);
       tradePositionRepository.save(newPosition);
 
       try {
@@ -102,7 +103,7 @@ public class StrategyEvaluator {
         openPosition.setOpened(false);
         openPosition.setClosePrice(currentPrice.doubleValue());
         openPosition.setCloseDate(LocalDateTime.now());
-        openPosition.setResult(openPosition.getClosePrice() - openPosition.getOpenPrice());
+        openPosition.setResult((openPosition.getClosePrice() - openPosition.getOpenPrice())*quantity);
 
         tradePositionRepository.save(openPosition);
 

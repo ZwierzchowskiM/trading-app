@@ -63,8 +63,8 @@ public class EmailService {
       message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
 
       String htmlContent;
-      // Tworzenie unikalnego Message-ID
-      String messageId = "<" + UUID.randomUUID().toString() + "trading-app.com>"; // możesz użyć swojej domeny
+
+      String messageId = "<" + UUID.randomUUID().toString() + "trading-app.com>";
       message.setHeader("Message-ID", messageId);
 
       if ("BUY".equals(type)) {
@@ -72,6 +72,7 @@ public class EmailService {
         message.setSubject("Nowa transakcja: BUY ---" + UUID.randomUUID());
         htmlContent = "<h2>Nowa transakcja: BUY</h2>" +
                 "<p><b>Cena zakupu:</b> " + position.getOpenPrice() + " USDT</p>" +
+                "<p><b>Ilość:</b> " + position.getQuantity() + " BTC</p>" +
                 "<p><b>Data otwarcia:</b> " + position.getOpenDate() + "</p>";
         message.setContent(htmlContent, "text/html; charset=utf-8");
       } else {
@@ -79,9 +80,10 @@ public class EmailService {
         htmlContent = "<h2>Nowa transakcja: SELL</h2>" +
                 "<p><b>Data otwarcia:</b> " + position.getOpenDate() +
                 "<p><b>Data zamknięcia:</b> " + position.getCloseDate() +
+                "<p><b>Ilość:</b> " + position.getQuantity() + " BTC</p>" +
                 "<p><b>Cena zakupu:</b> " + position.getOpenPrice() + " USDT</p>" +
                 "<p><b>Cena sprzedaży:</b> " + position.getClosePrice() + " USDT</p>" +
-                "<p><b>Zysk/Strata:</b> " + position.getResult() + " USDT</p>";
+                "<p><b>Rezultat:</b> " + position.getResult() + " USDT</p>";
         message.setContent(htmlContent, "text/html; charset=utf-8");
       }
 

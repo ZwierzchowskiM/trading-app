@@ -4,7 +4,7 @@ import com.mzwierzchowski.trading_app.model.TradePosition;
 import com.mzwierzchowski.trading_app.service.BinanceClient;
 import com.mzwierzchowski.trading_app.service.EmailService;
 import com.mzwierzchowski.trading_app.service.RealTimeStrategyRunner;
-import com.mzwierzchowski.trading_app.service.StrategyEvaluator;
+import com.mzwierzchowski.trading_app.service.StrategyEvaluatorService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -23,13 +23,13 @@ public class TradingController {
 
   private final RealTimeStrategyRunner strategyRunner;
   private BinanceClient binanceClient;
-  private StrategyEvaluator strategyEvaluator;
+  private StrategyEvaluatorService strategyEvaluatorService;
   private EmailService emailService;
 
-  public TradingController(RealTimeStrategyRunner strategyRunner, BinanceClient binanceClient, StrategyEvaluator strategyEvaluator, EmailService emailService) {
+  public TradingController(RealTimeStrategyRunner strategyRunner, BinanceClient binanceClient, StrategyEvaluatorService strategyEvaluatorService, EmailService emailService) {
     this.strategyRunner = strategyRunner;
       this.binanceClient = binanceClient;
-      this.strategyEvaluator = strategyEvaluator;
+      this.strategyEvaluatorService = strategyEvaluatorService;
       this.emailService = emailService;
   }
 
@@ -69,8 +69,8 @@ public class TradingController {
           @RequestParam String symbol,
           @RequestParam double quantity) {
 
-    strategyEvaluator.setSymbol(symbol);
-    strategyEvaluator.setQuantity(quantity);
+    strategyEvaluatorService.setSymbol(symbol);
+    strategyEvaluatorService.setQuantity(quantity);
 
     return ResponseEntity.ok("Zaktualizowano parametry: symbol = " + symbol + ", ilość = " + quantity);
   }

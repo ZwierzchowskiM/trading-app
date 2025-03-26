@@ -19,6 +19,7 @@ public class TradePosition {
     private boolean isOpened;
     private double openPrice;
     private double closePrice;
+    private double quantity;
     private double result;
     private LocalDateTime openDate;
     private LocalDateTime closeDate;
