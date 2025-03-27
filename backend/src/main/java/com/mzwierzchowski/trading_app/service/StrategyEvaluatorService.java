@@ -23,8 +23,8 @@ public class StrategyEvaluatorService {
   private BinanceClient binanceClient;
   private TradePosition position;
 
-  private static String SYMBOL = "BTCUSDC";
-  private static double QUANTITY = 0.0001;
+  private String symbol = "BTCUSDC";
+  private double quantity = 0.0001;
   private static final String NOTIFICATION_EMAIL = "app.mzwierzchowski@gmail.com";
 
   private final EmailService emailService;
@@ -70,7 +70,7 @@ public class StrategyEvaluatorService {
     boolean shouldExit = strategy.getExitRule().isSatisfied(lastIndex, tradingRecord);
 
     if (shouldEnter) {
-      String response = binanceClient.placeOrder(SYMBOL, "BUY", "MARKET", QUANTITY);
+      String response = binanceClient.placeOrder(symbol, "BUY", "MARKET", quantity);
       System.out.println(response);
       System.out.println("Sygnał kupna aktywny! Kupuję za: " + currentPrice);
 
@@ -78,7 +78,7 @@ public class StrategyEvaluatorService {
       newPosition.setOpened(true);
       newPosition.setOpenDate(LocalDateTime.now());
       newPosition.setOpenPrice(currentPrice.doubleValue());
-      newPosition.setQuantity(QUANTITY);
+      newPosition.setQuantity(quantity);
       tradePositionRepository.save(newPosition);
 
       try {
@@ -96,14 +96,14 @@ public class StrategyEvaluatorService {
               .orElse(null);
 
       if (openPosition != null) {
-        String response = binanceClient.placeOrder(SYMBOL, "SELL", "MARKET", QUANTITY);
+        String response = binanceClient.placeOrder(symbol, "SELL", "MARKET", quantity);
         System.out.println(response);
         System.out.println("Sygnał sprzedaży! Sprzedaję za: " + currentPrice);
 
         openPosition.setOpened(false);
         openPosition.setClosePrice(currentPrice.doubleValue());
         openPosition.setCloseDate(LocalDateTime.now());
-        openPosition.setResult((openPosition.getClosePrice() - openPosition.getOpenPrice())* QUANTITY);
+        openPosition.setResult((openPosition.getClosePrice() - openPosition.getOpenPrice())* quantity);
 
         tradePositionRepository.save(openPosition);
 
