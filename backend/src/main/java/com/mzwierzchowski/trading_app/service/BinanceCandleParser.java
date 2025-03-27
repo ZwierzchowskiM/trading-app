@@ -47,7 +47,6 @@ public class BinanceCandleParser {
             long currentTimeMillis = System.currentTimeMillis();
 
             if (lastCandle.getCloseTime() > currentTimeMillis) {
-//                System.out.println("Ostatnia świeca jest niezamknięta. Usuwam ją.");
                 candles.remove(candles.size() - 1);
             }
         }

@@ -11,8 +11,6 @@ import org.ta4j.core.*;
 public class RealTimeStrategyRunner {
 
   private BarSeries series;
-  private String symbol = "BITCOIN";
-
   private double lastPrice = 0;
   private double newPrice;
   private StockTwitsResult stockTwitsResult;
@@ -34,10 +32,7 @@ public class RealTimeStrategyRunner {
     try {
       series = binanceService.getHistoricalBarSeries();
       //stockTwitsResult = stockTwitsService.getStockSentiment();
-      //printBar(series.getLastBar());
       newPrice = series.getLastBar().getClosePrice().doubleValue();
-      System.out.println("new price: " + newPrice);
-      //compareResults();
       strategyEvaluatorService.evaluate(series);
       System.out.println("--------------------------");
 

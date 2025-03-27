@@ -21,7 +21,6 @@ public class BinanceService {
   public BarSeries getHistoricalBarSeries() throws IOException {
 
     List<Candle> candleList = binanceCandleParser.parseCandles();
-    //candleList.remove(candleList.size() - 1);
     BarSeries series = binanceCandleConverter.convert(candleList);
 
     return series;

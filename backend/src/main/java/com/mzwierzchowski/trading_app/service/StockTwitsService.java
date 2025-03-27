@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 public class StockTwitsService {
 
   private static final String BASE_URL = "https://api.stocktwits.com/api/2/streams/symbol/BTC.X.json";
-  private static final int LIMIT = 30; // Maksymalna liczba wiadomości na żądanie
+  private static final int LIMIT = 30;
 
   // Zmienne do przechowywania poprzednich wyników
   private int previousBullishCount = -1;
@@ -32,7 +32,7 @@ public class StockTwitsService {
 
     List<Message> allMessages = new ArrayList<>();
     ObjectMapper mapper = new ObjectMapper();
-    long maxId = Long.MAX_VALUE; // Początkowa wartość maxId
+    long maxId = Long.MAX_VALUE;
     boolean moreMessages = true;
 
     try {
@@ -43,10 +43,9 @@ public class StockTwitsService {
         List<Message> messages = response.getMessages();
 
         if (messages.isEmpty()) {
-          moreMessages = false; // Brak kolejnych wiadomości do pobrania
+          moreMessages = false;
         } else {
           allMessages.addAll(messages);
-          // Ustawienie maxId na ID ostatniej pobranej wiadomości minus 1
           maxId = messages.get(messages.size() - 1).getId() - 1;
         }
 
