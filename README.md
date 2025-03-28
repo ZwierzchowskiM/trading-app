@@ -63,4 +63,4 @@ Trade notifications are sent via email upon executing trades.
 
 ## 🔄 Project Status
 Development Stage: Actively maintained and under continuous development.
-Last Update: [Insert Date]
+
